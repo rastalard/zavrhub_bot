@@ -1,22 +1,24 @@
 import telebot
 from telebot import types
 import os
-from flask import Flask
-from threading import Thread
 import time
 
-# === Токен из Secrets ===
-TOKEN = os.environ["TOKEN"]
+# === Токен берём из переменных окружения (чтобы не светить в коде) ===
+TOKEN = os.getenv("TOKEN")
+
+if not TOKEN:
+    raise ValueError("❌ Не найден токен! Добавь переменную TOKEN в настройках Render или .env")
+
 bot = telebot.TeleBot(TOKEN)
 
-# === Каналы ===
+# === Список каналов ===
 CHANNELS = [
-    {"name": "🎬 Фильмозавр", "link": "https://t.me/filmozavrs"},
+    {"name": "🎬Фильмозавр - твой Кинозал🍿", "link": "https://t.me/filmozavrs"},
     # {"name": "📰 Анализатор", "link": "https://t.me/analyzer_news"},
     # {"name": "₿ Криптозавр", "link": "https://t.me/cryptozavr_channel"},
 ]
 
-# === Приветствие ===
+# === Команда /start ===
 @bot.message_handler(commands=['start'])
 def send_welcome(message):
     user_first_name = message.from_user.first_name or "друг"
@@ -24,9 +26,10 @@ def send_welcome(message):
         f"🚀 Привет, {user_first_name}!\n\n"
         "Готов к погружению в мир кино, инфо-хайпа и криптовалютных волн?\n"
         "Тогда держись крепче — будет жарко! 🔥\n"
-        "  - Лучшие фильмы и сериалы всех времён 🍿🎬\n"
-        "  - Проверенные новости без воды 📰🤔\n"
-        "  - Крипто-выжимка 💶🫰\n\n"
+        "\n"
+        "  🔴 Лучшие фильмы и сериалы всех времён 🍿🎬\n"
+        "  🟡 Проверенные новости без воды 📰🤔\n"
+        "  🟢 Крипто-выжимка 💶🫰\n\n"
         "Подпишись на наши главные каналы 👇"
     )
     
@@ -36,26 +39,13 @@ def send_welcome(message):
     
     bot.send_message(message.chat.id, text, reply_markup=markup)
 
+# === Команда /channels ===
 @bot.message_handler(commands=['channels'])
 def show_channels(message):
     text = "📡 Наши актуальные каналы:\n\n"
     for ch in CHANNELS:
         text += f"{ch['name']} → {ch['link']}\n"
     bot.send_message(message.chat.id, text)
-
-# === Мини веб-сервер для keep_alive ===
-app = Flask('')
-
-@app.route('/')
-def home():
-    return "Бот онлайн ✅"
-
-def run():
-    app.run(host='0.0.0.0', port=3000)
-
-def keep_alive():
-    t = Thread(target=run)
-    t.start()
 
 # === Запуск бота ===
 def main():
@@ -68,5 +58,4 @@ def main():
             time.sleep(5)
 
 if __name__ == "__main__":
-    keep_alive()  # веб-сервер для UptimeRobot
     main()
